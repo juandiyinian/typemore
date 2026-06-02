@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Typemore Logo Concepts</title>
+  <style>
+    :root { color-scheme: dark; --bg:#050806; --card:#0B100D; --stroke:rgba(124,255,178,.14); --text:#ECFFF4; --muted:#7E8B84; --green:#45F59B; }
+    body { margin:0; min-height:100vh; background:radial-gradient(circle at 30% 12%, #102018 0, transparent 36%), var(--bg); font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter",sans-serif; color:var(--text); }
+    main { max-width:1120px; margin:0 auto; padding:56px 28px; }
+    h1 { margin:0 0 8px; font-size:28px; letter-spacing:-.03em; }
+    p { margin:0 0 28px; color:var(--muted); }
+    .grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:18px; }
+    .card { background:rgba(11,16,13,.86); border:1px solid var(--stroke); border-radius:24px; padding:20px; box-shadow:0 24px 64px rgba(0,0,0,.28); }
+    .stage { aspect-ratio:1; border-radius:18px; overflow:hidden; background:#050806; display:grid; place-items:center; }
+    img { width:100%; height:100%; display:block; }
+    h2 { margin:16px 0 6px; font-size:15px; }
+    .note { color:var(--muted); font-size:13px; line-height:1.5; margin:0; }
+    .tag { color:var(--green); font-size:12px; letter-spacing:.08em; text-transform:uppercase; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="tag">Typemore Logo Concepts</div>
+    <h1>Monogram / Glyph / System Icon</h1>
+    <p>三套都保持极简、几何、可缩放；主题色贴近设置页的 Typemore Green。</p>
+    <section class="grid">
+      <article class="card">
+        <div class="stage"><img src="typemore-monogram.svg" alt="Monogram" /></div>
+        <h2>Monogram</h2>
+        <p class="note">最直接的 T+ 字标，适合品牌主标识和设置页展示。</p>
+      </article>
+      <article class="card">
+        <div class="stage"><img src="typemore-glyph.svg" alt="Glyph" /></div>
+        <h2>Glyph</h2>
+        <p class="note">将 T 与 + 融合成单一符号，更抽象，更像产品识别符。</p>
+      </article>
+      <article class="card">
+        <div class="stage"><img src="typemore-system-icon.svg" alt="System Icon" /></div>
+        <h2>System Icon</h2>
+        <p class="note">面向 macOS App Icon 的圆角底版本，用四角星替代加号，表达 AI 增强感。</p>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

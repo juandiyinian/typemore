@@ -1,0 +1,27 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Typemore System Icon</title>
+  <defs>
+    <linearGradient id="bg" x1="176" y1="112" x2="848" y2="912" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#101A14"/>
+      <stop offset="1" stop-color="#050806"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="260" y1="242" x2="796" y2="778" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7CFFB2"/>
+      <stop offset="0.55" stop-color="#45F59B"/>
+      <stop offset="1" stop-color="#25C774"/>
+    </linearGradient>
+    <linearGradient id="spark" x1="648" y1="366" x2="820" y2="602" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D8FFE9"/>
+      <stop offset="0.42" stop-color="#7CFFB2"/>
+      <stop offset="1" stop-color="#37E884"/>
+    </linearGradient>
+  </defs>
+  <rect x="96" y="96" width="832" height="832" rx="206" fill="url(#bg)"/>
+  <rect x="112" y="112" width="800" height="800" rx="190" stroke="#7CFFB2" stroke-opacity="0.12" stroke-width="16"/>
+  <g fill="url(#mark)">
+    <rect x="256" y="316" width="356" height="82" rx="41"/>
+    <rect x="393" y="316" width="82" height="392" rx="41"/>
+  </g>
+  <path d="M734 356C748 426 766 444 836 458C766 472 748 490 734 560C720 490 702 472 632 458C702 444 720 426 734 356Z" fill="url(#spark)"/>
+  <circle cx="794" cy="386" r="9" fill="#A7FFD0" opacity="0.52"/>
+</svg>

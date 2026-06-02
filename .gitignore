@@ -1,0 +1,39 @@
+dist/
+out/
+release/
+build/
+.build/
+*.dmg
+*.zip
+*.app
+*.iconset/
+*.log
+.DS_Store
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+.typemore/
+docs/handoff-*.md
+docs/electron-ax-issue.md
+
+# macOS and editor noise
+Icon?
+.Spotlight-V100
+.Trashes
+.vscode/
+.idea/
+
+# Native build artifacts
+DerivedData/
+
+# Coverage and caches
+coverage/
+.nyc_output/
+.cache/
+.parcel-cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
