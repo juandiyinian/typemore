@@ -146,6 +146,8 @@ scripts/benchmark-rewrite.py --repeat 3
 
 Typemore 会处理你主动触发改写的文本。每次触发时，目标文本和必要的前后文会发送给你在设置中配置的模型服务；上下文只用于理解语义，替换时只改动目标文本。
 
+Typemore 优先通过 macOS Accessibility API 读取和替换文本。部分应用不稳定时，Typemore 会临时使用系统剪贴板完成复制或粘贴，并在操作结束后恢复原剪贴板。若你使用第三方剪贴板管理器，中间内容可能被该管理器记录。请避免在敏感输入框中触发 Typemore。
+
 Typemore 不包含自建后端，不收集 analytics，也不会把你的 API Key 上传到这个仓库。
 
 完整隐私说明见 [docs/privacy.md](docs/privacy.md)。

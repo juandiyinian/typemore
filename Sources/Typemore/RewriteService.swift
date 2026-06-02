@@ -166,11 +166,18 @@ final class RewriteService {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let url = URL(string: trimmed),
               let scheme = url.scheme?.lowercased(),
-              ["http", "https"].contains(scheme),
-              url.host != nil else {
+              let host = url.host?.lowercased(),
+              ["http", "https"].contains(scheme) else {
             throw RewriteError.invalidEndpoint
         }
+        if scheme == "http", !isLocalHost(host) {
+            throw RewriteError.insecureEndpoint
+        }
         return url
+    }
+
+    private func isLocalHost(_ host: String) -> Bool {
+        host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "[::1]"
     }
 
     private func demoRewrite(_ text: String, mode: RewriteMode) -> String {
@@ -228,6 +235,7 @@ enum RewriteError: LocalizedError {
     case api(String)
     case timeout
     case invalidEndpoint
+    case insecureEndpoint
 
     var errorDescription: String? {
         switch self {
@@ -235,6 +243,7 @@ enum RewriteError: LocalizedError {
         case .api(let message): return message
         case .timeout: return "模型响应超时，请稍后再试"
         case .invalidEndpoint: return "Base URL 格式不正确"
+        case .insecureEndpoint: return "Base URL 需要使用 HTTPS；本地 localhost 调试除外"
         }
     }
 }

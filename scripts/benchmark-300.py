@@ -116,6 +116,15 @@ def response_preview(body: str) -> tuple[str, int]:
     return text.strip().replace("\n", " ")[:180], len(text)
 
 
+def safe_error_message(body: str) -> str:
+    try:
+        decoded = json.loads(body)
+        message = decoded.get("error", {}).get("message") or decoded.get("message") or ""
+        return str(message).replace("\n", " ")[:180]
+    except Exception:
+        return ""
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Benchmark Typemore with an exact 300-character text.")
     parser.add_argument(
@@ -182,7 +191,7 @@ def main() -> int:
     except urllib.error.HTTPError as error:
         log("http request", ms(stage_start))
         error_body = error.read().decode("utf-8", errors="replace")
-        print(f"HTTP_ERROR status={error.code} body={error_body[:500]}", file=sys.stderr)
+        print(f"HTTP_ERROR status={error.code} message={safe_error_message(error_body)}", file=sys.stderr)
         return 3
     except urllib.error.URLError as error:
         log("http request", ms(stage_start))

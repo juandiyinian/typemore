@@ -123,6 +123,15 @@ def extract_preview(response_body: str) -> str:
         return response_body.strip().replace("\n", " ")[:160]
 
 
+def safe_error_message(body: str) -> str:
+    try:
+        decoded = json.loads(body)
+        message = decoded.get("error", {}).get("message") or decoded.get("message") or ""
+        return str(message).replace("\n", " ")[:180]
+    except Exception:
+        return ""
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Benchmark Typemore rewrite API with a 200-300 Chinese character sample.")
     parser.add_argument("--text", help="Custom text to rewrite.")
@@ -160,7 +169,7 @@ def main() -> int:
             return 2
         except urllib.error.HTTPError as error:
             body = error.read().decode("utf-8", errors="replace")
-            print(f"[{index}] HTTP_ERROR status={error.code} body={body[:500]}", file=sys.stderr)
+            print(f"[{index}] HTTP_ERROR status={error.code} message={safe_error_message(body)}", file=sys.stderr)
             return 4
         except urllib.error.URLError as error:
             reason = getattr(error, "reason", error)

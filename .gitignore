@@ -17,6 +17,7 @@ build/
 .typemore/
 docs/handoff-*.md
 docs/electron-ax-issue.md
+docs/security-review-*.md
 
 # macOS and editor noise
 Icon?
