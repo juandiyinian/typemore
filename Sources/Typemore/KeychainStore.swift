@@ -6,30 +6,46 @@ enum KeychainStore {
     private static let service = "Typemore"
     private static let account = "default-api-key"
 
-    static func loadAPIKey() -> String {
-        var query = baseQuery()
+    static func loadAPIKey(for provider: Provider) -> String {
+        let account = "api-key-\(provider.rawValue)"
+        var query = baseQuery(account: account)
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
 
         var result: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
-        guard status == errSecSuccess,
-              let data = result as? Data,
-              let value = String(data: data, encoding: .utf8) else {
-            return ""
+        if status == errSecSuccess,
+           let data = result as? Data,
+           let value = String(data: data, encoding: .utf8) {
+            return value
         }
-        return value
+        
+        // Fallback to old default key for backward compatibility
+        var fallbackQuery = baseQuery(account: "default-api-key")
+        fallbackQuery[kSecReturnData as String] = true
+        fallbackQuery[kSecMatchLimit as String] = kSecMatchLimitOne
+        
+        var fallbackResult: CFTypeRef?
+        let fallbackStatus = SecItemCopyMatching(fallbackQuery as CFDictionary, &fallbackResult)
+        if fallbackStatus == errSecSuccess,
+           let data = fallbackResult as? Data,
+           let value = String(data: data, encoding: .utf8) {
+            return value
+        }
+        
+        return ""
     }
 
     @discardableResult
-    static func saveAPIKey(_ value: String) -> Bool {
+    static func saveAPIKey(_ value: String, for provider: Provider) -> Bool {
+        let account = "api-key-\(provider.rawValue)"
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
-            return deleteAPIKey()
+            return deleteAPIKey(for: provider)
         }
         guard let data = trimmed.data(using: .utf8) else { return false }
 
-        let query = baseQuery()
+        let query = baseQuery(account: account)
         let attributes: [String: Any] = [kSecValueData as String: data]
 
         let updateStatus = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
@@ -46,12 +62,13 @@ enum KeychainStore {
     }
 
     @discardableResult
-    static func deleteAPIKey() -> Bool {
-        let status = SecItemDelete(baseQuery() as CFDictionary)
+    static func deleteAPIKey(for provider: Provider) -> Bool {
+        let account = "api-key-\(provider.rawValue)"
+        let status = SecItemDelete(baseQuery(account: account) as CFDictionary)
         return status == errSecSuccess || status == errSecItemNotFound
     }
 
-    private static func baseQuery() -> [String: Any] {
+    private static func baseQuery(account: String) -> [String: Any] {
         [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,

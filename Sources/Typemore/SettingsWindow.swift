@@ -289,6 +289,7 @@ struct SettingsView: View {
         draft.serviceName = provider.displayName
         draft.endpoint = provider.defaultEndpoint
         draft.model = provider.defaultModel
+        draft.apiKey = KeychainStore.loadAPIKey(for: provider)
     }
 }
 
