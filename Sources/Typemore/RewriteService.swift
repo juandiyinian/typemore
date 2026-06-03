@@ -52,6 +52,8 @@ final class RewriteService {
     private func rewriteWithChatCompletions(_ text: String, contextBefore: String, contextAfter: String, instruction: String, settings: AppSettings) async throws -> String {
         let startedAt = Date()
         let url = try validatedURL(chatCompletionsEndpoint(settings.endpoint))
+        let isMinimax = settings.endpoint.lowercased().contains("api.minimaxi.com/v1")
+        
         let body = ChatRequest(
             model: settings.model,
             messages: [
@@ -60,7 +62,9 @@ final class RewriteService {
             ],
             temperature: 0.2,
             maxTokens: maxOutputTokens(for: text),
-            thinking: settings.provider == .volcengine ? ThinkingConfig(type: "disabled") : nil
+            thinking: settings.provider == .volcengine ? ThinkingConfig(type: "disabled") : nil,
+            reasoningSplit: isMinimax ? true : nil,
+            extraBody: isMinimax ? ["reasoning_split": true] : nil
         )
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -287,6 +291,8 @@ private struct ChatRequest: Encodable {
     let temperature: Double
     let maxTokens: Int
     let thinking: ThinkingConfig?
+    let reasoningSplit: Bool?
+    let extraBody: [String: Bool]?
 
     enum CodingKeys: String, CodingKey {
         case model
@@ -294,6 +300,8 @@ private struct ChatRequest: Encodable {
         case temperature
         case maxTokens = "max_tokens"
         case thinking
+        case reasoningSplit = "reasoning_split"
+        case extraBody = "extra_body"
     }
 }
 
