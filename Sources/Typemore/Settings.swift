@@ -36,39 +36,10 @@ enum Provider: String, CaseIterable, Codable, Identifiable {
     }
 }
 
-enum RewriteMode: String, CaseIterable, Codable, Identifiable {
-    case custom
-    case clear
-
-    var id: String { rawValue }
-
-    var displayName: String {
-        switch self {
-        case .custom: return "我的文风"
-        case .clear: return "更清楚"
-        }
-    }
-
-    var instruction: String {
-        switch self {
-        case .clear: return """
-        Rewrite the text into a clear, natural, and well-structured version that works for everyday writing and workplace communication.
-
-        Priorities:
-        1. Preserve the original meaning, facts, stance, tone strength, names, numbers, links, and key details.
-        2. If the source is scattered, reorganize it so the main point, context, reasoning, feedback, request, or next step is easier to follow.
-        3. Make the wording concise but not thin; keep necessary nuance and make the expression more complete when the original is too rough.
-        4. For longer or information-dense text, use short paragraphs, bullet points, or numbered lists when that improves readability.
-        5. Correct obvious typos, missing words, grammar issues, and awkward phrasing.
-
-        Avoid:
-        1. Do not invent facts, add unsupported claims, or change the user's judgment.
-        2. Do not make the text overly formal, overly polite, templated, or salesy.
-        3. Do not explain the rewrite. Return only the rewritten text.
-        """
-        case .custom: return "Rewrite it in the user's custom writing style."
-        }
-    }
+struct CustomWritingStyle: Codable, Equatable, Identifiable {
+    var id: String
+    var name: String
+    var instruction: String
 }
 
 struct AppSettings: Codable, Equatable {
@@ -77,8 +48,8 @@ struct AppSettings: Codable, Equatable {
     var endpoint: String
     var model: String
     var apiKey: String
-    var defaultMode: RewriteMode
-    var customStyle: String
+    var activeStyleId: String
+    var customStyles: [CustomWritingStyle]
     var systemPrompt: String
 
     private static let previousDefaultCustomStyle = "在严格保留原意的前提下，帮我把表达改得更清晰、准确、自然。可以根据上下文修正明显错别字、漏字、语病和不顺的表达。面对长段文本时，优先提升阅读体验：理顺逻辑、拆分长句、适当分段；如果信息点较多，可以加入项目符号或编号，让重点更清楚。不要过度扩写，不要改变事实、立场、语气强弱和关键信息。"
@@ -108,14 +79,16 @@ struct AppSettings: Codable, Equatable {
     Return only the rewritten text.
     """
 
+    static let clearStyleId = "clear"
+
     static let defaults = AppSettings(
         provider: .volcengine,
         serviceName: Provider.volcengine.displayName,
         endpoint: Provider.volcengine.defaultEndpoint,
         model: Provider.volcengine.defaultModel,
         apiKey: "",
-        defaultMode: .clear,
-        customStyle: defaultCustomStyle,
+        activeStyleId: clearStyleId,
+        customStyles: [CustomWritingStyle(id: UUID().uuidString, name: "自定义风格", instruction: defaultCustomStyle)],
         systemPrompt: defaultSystemPrompt
     )
 
@@ -130,9 +103,17 @@ struct AppSettings: Codable, Equatable {
         if copy.model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             copy.model = copy.provider.defaultModel
         }
-        let trimmedCustomStyle = copy.customStyle.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmedCustomStyle.isEmpty || trimmedCustomStyle == AppSettings.previousDefaultCustomStyle {
-            copy.customStyle = AppSettings.defaultCustomStyle
+        for i in 0..<copy.customStyles.count {
+            let trimmed = copy.customStyles[i].instruction.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.isEmpty || trimmed == AppSettings.previousDefaultCustomStyle {
+                copy.customStyles[i].instruction = AppSettings.defaultCustomStyle
+            }
+        }
+        if copy.customStyles.isEmpty {
+            copy.customStyles = [CustomWritingStyle(id: UUID().uuidString, name: "自定义风格", instruction: AppSettings.defaultCustomStyle)]
+        }
+        if copy.activeStyleId != AppSettings.clearStyleId && !copy.customStyles.contains(where: { $0.id == copy.activeStyleId }) {
+            copy.activeStyleId = AppSettings.clearStyleId
         }
         if copy.systemPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             copy.systemPrompt = AppSettings.defaultSystemPrompt
@@ -146,8 +127,10 @@ struct AppSettings: Codable, Equatable {
         case endpoint
         case model
         case apiKey
-        case defaultMode
-        case customStyle
+        case activeStyleId
+        case customStyles
+        case defaultMode // For migration
+        case customStyle // For migration
         case systemPrompt
     }
 
@@ -157,8 +140,8 @@ struct AppSettings: Codable, Equatable {
         endpoint: String,
         model: String,
         apiKey: String,
-        defaultMode: RewriteMode,
-        customStyle: String,
+        activeStyleId: String,
+        customStyles: [CustomWritingStyle],
         systemPrompt: String
     ) {
         self.provider = provider
@@ -166,8 +149,8 @@ struct AppSettings: Codable, Equatable {
         self.endpoint = endpoint
         self.model = model
         self.apiKey = apiKey
-        self.defaultMode = defaultMode
-        self.customStyle = customStyle
+        self.activeStyleId = activeStyleId
+        self.customStyles = customStyles
         self.systemPrompt = systemPrompt
     }
 
@@ -178,12 +161,20 @@ struct AppSettings: Codable, Equatable {
         self.endpoint = try container.decodeIfPresent(String.self, forKey: .endpoint) ?? provider.defaultEndpoint
         self.model = try container.decodeIfPresent(String.self, forKey: .model) ?? provider.defaultModel
         self.apiKey = try container.decodeIfPresent(String.self, forKey: .apiKey) ?? ""
+        self.customStyles = try container.decodeIfPresent([CustomWritingStyle].self, forKey: .customStyles) ?? []
+        
         if let rawDefaultMode = try container.decodeIfPresent(String.self, forKey: .defaultMode) {
-            self.defaultMode = RewriteMode(rawValue: rawDefaultMode) ?? .clear
+            // Migrate from old format
+            let legacyCustomStyle = try container.decodeIfPresent(String.self, forKey: .customStyle) ?? AppSettings.defaultCustomStyle
+            let migratedStyle = CustomWritingStyle(id: UUID().uuidString, name: "自定义风格", instruction: legacyCustomStyle)
+            self.customStyles = [migratedStyle]
+            self.activeStyleId = (rawDefaultMode == "custom") ? migratedStyle.id : AppSettings.clearStyleId
         } else {
-            self.defaultMode = .clear
+            self.activeStyleId = try container.decodeIfPresent(String.self, forKey: .activeStyleId) ?? AppSettings.clearStyleId
+            if self.customStyles.isEmpty {
+                self.customStyles = [CustomWritingStyle(id: UUID().uuidString, name: "自定义风格", instruction: AppSettings.defaultCustomStyle)]
+            }
         }
-        self.customStyle = try container.decodeIfPresent(String.self, forKey: .customStyle) ?? AppSettings.defaultCustomStyle
         self.systemPrompt = try container.decodeIfPresent(String.self, forKey: .systemPrompt) ?? AppSettings.defaultSystemPrompt
     }
 
@@ -194,8 +185,8 @@ struct AppSettings: Codable, Equatable {
         try container.encode(serviceName, forKey: .serviceName)
         try container.encode(endpoint, forKey: .endpoint)
         try container.encode(model, forKey: .model)
-        try container.encode(defaultMode, forKey: .defaultMode)
-        try container.encode(customStyle, forKey: .customStyle)
+        try container.encode(activeStyleId, forKey: .activeStyleId)
+        try container.encode(customStyles, forKey: .customStyles)
         try container.encode(systemPrompt, forKey: .systemPrompt)
     }
 }
